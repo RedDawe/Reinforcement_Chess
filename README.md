@@ -5,6 +5,9 @@ Dumber, retarded brother of AlphaZero, who got beat up with a baseball bat in th
 # What is not done
 
 Pawn exchange at the end of a board
+
 Castling
+
 En passant
+
 Draws
