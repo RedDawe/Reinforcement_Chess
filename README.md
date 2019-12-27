@@ -11,3 +11,5 @@ Dumber, retarded brother of AlphaZero, who got beat up with a baseball bat in th
 - castling (also not allowed)
 
 - pawn at the end of the board gets automatically traded for a QUEEN (sometimes u would like another piece)
+
+Some of these rules (castling) are sometimes not allowed for computers as the games tend to be more interesting in that case, some of the rules (en passant, queen) just don't happen often enough to be bothered with and stalemate classification is only effective in training, which may or may not have a positive effect on the actaull games.
