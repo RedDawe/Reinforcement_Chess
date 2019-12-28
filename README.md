@@ -13,3 +13,7 @@ Dumber, retarded brother of AlphaZero, who got beat up with a baseball bat in th
 - pawn at the end of the board gets automatically traded for a QUEEN (sometimes u would like another piece)
 
 Some of these rules (castling) are sometimes not allowed for computers as the games tend to be more interesting in that case, some of the rules (en passant, queen) just don't happen often enough to be bothered with and stalemate classification is only effective in training, which may or may not have a positive effect on the actuall games.
+
+# Stockfish cheat
+
+To adress computational scarcity, in this implementation we don't start with random moves but moves genereated by stockfish. It takes longer to generate the moves, but network requires less iterations to start learning something decent. At the end the network still self plays tho, so it is not capping its upside. It is not tabula rasa, but it still is a neural net playing chess.
