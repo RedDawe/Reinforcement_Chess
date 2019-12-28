@@ -123,12 +123,12 @@ model = inputs
 # model = tf.keras.backend.cast(model, 'float32')
 
 for i in range(16):
-    cell = tf.keras.layers.Conv2D(filters=64, kernel_size=[1, 1], activation='elu', padding='same')(model)
-    cell = tf.keras.layers.Conv2D(filters=64, kernel_size=[3, 3], activation='elu', padding='same')(cell)
+    cell = tf.keras.layers.Conv2D(filters=32, kernel_size=[1, 1], activation='elu', padding='same', kernel_initializer=tf.keras.initializers.VarianceScaling(scale=0.1))(model)
+    cell = tf.keras.layers.Conv2D(filters=32, kernel_size=[3, 3], activation='elu', padding='same', kernel_initializer=tf.keras.initializers.VarianceScaling(scale=0.1))(cell)
     cell = tf.keras.layers.BatchNormalization()(cell)
     model = tf.keras.layers.Concatenate()(list([model, cell]))
 
-model = tf.keras.layers.Conv2D(filters=2 * p + 1, kernel_size=[1, 1], activation='linear', padding='same')(model)
+model = tf.keras.layers.Conv2D(filters=2 * p + 1, kernel_size=[1, 1], activation='linear', padding='same', kernel_initializer=tf.keras.initializers.VarianceScaling(scale=0.1))(model)
 model = tf.keras.layers.Reshape([-1, 2 * p + 1])(model)
 model = tf.keras.layers.Softmax(axis=-1)(model)
 model = tf.keras.layers.Reshape([8, 8, 2 * p + 1])(model)
@@ -136,8 +136,8 @@ model = tf.keras.layers.Reshape([8, 8, 2 * p + 1])(model)
 model = tf.keras.Model(inputs=inputs, outputs=model)
 # model = tf.keras.Model(inputs=[inputs, weights], outputs=model)
 
-#adam = tf.keras.optimizers.Adam(learning_rate=0.01)
-model.compile(optimizer='adam', loss=weighted_loss)
+adam = tf.keras.optimizers.Adam(learning_rate=0.0001)
+model.compile(optimizer=adam, loss=weighted_loss)
 # model.compile(optimizer='adam', loss=weighted_loss(weights))
 # model.compile(optimizer='adam', loss='mean_squared_error')
 # model.compile(optimizer='adam', loss='categorical_crossentropy')
@@ -327,7 +327,7 @@ def stockfish_get_possible_moves(board, coordinates):
     return legal_moves
 
 def get_possible_moves(board, coordinates): #put together all moves that 'is_legal', are on the board and aren't taking your own pieces
-  return stockfish_get_possible_moves(board, coordinates)
+  #return stockfish_get_possible_moves(board, coordinates)
 
   legal_moves = []
   for i in range(8):
@@ -412,7 +412,7 @@ n_steps = 200
 start = 0#44
 games_to_play = 100
 max_depth = 100
-epochs = 10
+epochs = 2
 batch_size = 512
 
 checkpoint_path = "training_0/cp.ckpt"
