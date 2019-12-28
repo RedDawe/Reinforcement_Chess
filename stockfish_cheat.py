@@ -3,10 +3,36 @@ import numpy as np
 import sys
 from stockfish import Stockfish
 
+from contextlib import contextmanager
+import threading
+import _thread
+
+class TimeoutException(Exception):
+    def __init__(self, msg=''):
+        self.msg = msg
+
+@contextmanager
+def time_limit(seconds, msg=''):
+    timer = threading.Timer(seconds, lambda: _thread.interrupt_main())
+    timer.start()
+    try:
+        yield
+    except KeyboardInterrupt:
+        raise TimeoutException("Timed out for operation {}".format(msg))
+    finally:
+        # if the action ends in specified time, timer is canceled
+        timer.cancel()
+
+import time
+
 print(tf.__version__)
 assert tf.executing_eagerly()
 np.random.seed(0)
-stockfish = Stockfish('stockfish_10_x64_popcnt') #popcunt (not intended) on my cpu, feel free to use bmi2
+
+def init_stockfish():
+    stockfish = Stockfish('stockfish_10_x64_popcnt', parameters={'Threads': 6})  # popcunt (not intended) on my cpu, feel free to use bmi2
+    # stockfish = Stockfish('stockfish_10_x64_popcnt')
+    return stockfish
 
 e = 0
 
@@ -186,6 +212,7 @@ def make_move(board, side, randomness=1.): #1 -> ai plays, 0 -> random move
         if board[7, j] == p:
             board[7, j] = q
 
+
     if side:
       return flip(board), np.flip(weights_arr, axis=0)
     else:
@@ -242,7 +269,9 @@ def decide_move(board, logits):
   return piece, to
 
 def random_move(board):
-  return stockfish_move(board)
+  piece, to = stockfish_move(board)
+  if piece and to:
+      return piece, to
 
   I = list(range(8))
   J = list(range(8))
@@ -278,10 +307,16 @@ def random_move(board):
   return piece, to
 
 def stockfish_move(board):
+    stockfish = init_stockfish()
+
     #print(type(board), 'mov')
     fen = ours_to_fen(board)
     stockfish.set_fen_position(fen)
-    stockfish_move = stockfish.get_best_move()
+    try:
+        with time_limit(5, 'sleep'):
+            stockfish_move = stockfish.get_best_move()
+    except:
+        stockfish_move = ''
 
     if stockfish_move:
         piece = [7-(int(stockfish_move[1])-1), alphabeta_alphabet_to_numberly_numbers[stockfish_move[0]]]
@@ -309,9 +344,12 @@ def is_check(board, piece):
   return check
 
 def stockfish_get_possible_moves(board, coordinates):
+
     legal_moves = []
     for i in range(8):
         for j in range(8):
+            print(i, j)
+            stockfish = init_stockfish()
             fen = ours_to_fen(board)
             stockfish.set_fen_position(fen)
 
@@ -321,8 +359,12 @@ def stockfish_get_possible_moves(board, coordinates):
             fen_move += numberly_numbers_to_alphabeta_alphabet[j]
             fen_move += str(7 - (i - 1))
 
-            if stockfish.is_move_correct(fen_move):
-                legal_moves.append([i, j])
+            try:
+                with time_limit(5, 'sleep'):
+                    if stockfish.is_move_correct(fen_move):
+                        legal_moves.append([i, j])
+            except:
+                pass
 
     return legal_moves
 
@@ -409,20 +451,20 @@ def is_legal(board, piece, move): #check if move is in a direction that the piec
     print('u fucked up')
 
 n_steps = 200
-start = 0#44
+start = 5#44
 games_to_play = 100
 max_depth = 100
 epochs = 2
 batch_size = 512
 
-checkpoint_path = "training_0/cp.ckpt"
+checkpoint_path = "training_1/cp.ckpt"
 
 cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
                                                  save_weights_only=True,
                                                  verbose=1)
 
-if False:
-    load_path = "training_4/cp.ckpt"
+if True:
+    load_path = "training_0/cp.ckpt"
     model.load_weights(load_path)
 
 
@@ -505,4 +547,5 @@ for step in range(start, n_steps):
     # model.fit(x=[x, w], y=y, epochs = epochs, callbacks=[cp_callback])
     # model.fit(x=x, y=y, epochs = epochs, callbacks=[cp_callback])
     model.fit(x=x, y=yw, epochs=epochs, callbacks=[cp_callback], verbose=2, batch_size=batch_size)
+    print(time.time())
 
