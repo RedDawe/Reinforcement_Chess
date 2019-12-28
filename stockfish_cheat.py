@@ -1,10 +1,12 @@
 import tensorflow as tf
-print(tf.__version__)
-assert tf.executing_eagerly()
 import numpy as np
 import sys
-np.random.seed(0)
+from stockfish import Stockfish
 
+print(tf.__version__)
+assert tf.executing_eagerly()
+np.random.seed(0)
+stockfish = Stockfish('stockfish_10_x64_popcnt') #popcunt (not intended) on my cpu, feel free to use bmi2
 
 e = 0
 
@@ -21,6 +23,55 @@ R = -3
 B = -4
 K = -5
 P = -6
+
+alphabeta_alphabet_to_numberly_numbers = {
+    'a': 0,
+    'b': 1,
+    'c': 2,
+    'd': 3,
+    'e': 4,
+    'f': 5,
+    'g': 6,
+    'h': 7
+}
+
+numberly_numbers_to_alphabeta_alphabet = {
+    0 : 'a',
+    1 : 'b',
+    2 : 'c',
+    3 : 'd',
+    4 : 'e',
+    5 : 'f',
+    6 : 'g',
+    7 : 'h'
+}
+
+char_converter = {
+    e: '1',
+    n: 'k',
+    q: 'q',
+    r: 'r',
+    b: 'b',
+    k: 'n',
+    p: 'p',
+    N: 'K',
+    Q: 'Q',
+    R: 'R',
+    B: 'B',
+    K: 'N',
+    P: 'P'
+}
+
+def ours_to_fen(board):
+
+    fen = ''
+    for i in range(8):
+        for j in range(8):
+            fen = fen + char_converter[board[i, j]]
+        fen = fen + '/'
+    fen = fen + ' b - - 0 1'
+
+    return fen
 
 def one_hot(array, n_classes):
   return np.array(tf.keras.backend.one_hot(array, n_classes))
@@ -72,8 +123,8 @@ model = inputs
 # model = tf.keras.backend.cast(model, 'float32')
 
 for i in range(16):
-    cell = tf.keras.layers.Conv2D(filters=2 * p + 1, kernel_size=[1, 1], activation='elu', padding='same')(model)
-    cell = tf.keras.layers.Conv2D(filters=2 * p + 1, kernel_size=[3, 3], activation='elu', padding='same')(cell)
+    cell = tf.keras.layers.Conv2D(filters=64, kernel_size=[1, 1], activation='elu', padding='same')(model)
+    cell = tf.keras.layers.Conv2D(filters=64, kernel_size=[3, 3], activation='elu', padding='same')(cell)
     cell = tf.keras.layers.BatchNormalization()(cell)
     model = tf.keras.layers.Concatenate()(list([model, cell]))
 
@@ -191,6 +242,8 @@ def decide_move(board, logits):
   return piece, to
 
 def random_move(board):
+  return stockfish_move(board)
+
   I = list(range(8))
   J = list(range(8))
   np.random.shuffle(I)
@@ -224,6 +277,20 @@ def random_move(board):
 
   return piece, to
 
+def stockfish_move(board):
+    #print(type(board), 'mov')
+    fen = ours_to_fen(board)
+    stockfish.set_fen_position(fen)
+    stockfish_move = stockfish.get_best_move()
+
+    if stockfish_move:
+        piece = [7-(int(stockfish_move[1])-1), alphabeta_alphabet_to_numberly_numbers[stockfish_move[0]]]
+        to = [7-(int(stockfish_move[3])-1), alphabeta_alphabet_to_numberly_numbers[stockfish_move[2]]]
+
+        return piece, to
+    else:
+        return [], []
+
 def is_check(board, piece):
   coordinates = []
 
@@ -241,7 +308,27 @@ def is_check(board, piece):
 
   return check
 
+def stockfish_get_possible_moves(board, coordinates):
+    legal_moves = []
+    for i in range(8):
+        for j in range(8):
+            fen = ours_to_fen(board)
+            stockfish.set_fen_position(fen)
+
+            fen_move = ''
+            fen_move += numberly_numbers_to_alphabeta_alphabet[coordinates[1]]
+            fen_move += str(7 - (coordinates[0] - 1))
+            fen_move += numberly_numbers_to_alphabeta_alphabet[j]
+            fen_move += str(7 - (i - 1))
+
+            if stockfish.is_move_correct(fen_move):
+                legal_moves.append([i, j])
+
+    return legal_moves
+
 def get_possible_moves(board, coordinates): #put together all moves that 'is_legal', are on the board and aren't taking your own pieces
+  return stockfish_get_possible_moves(board, coordinates)
+
   legal_moves = []
   for i in range(8):
     for j in range(8):
@@ -325,10 +412,10 @@ n_steps = 200
 start = 0#44
 games_to_play = 100
 max_depth = 100
-epochs = 2
+epochs = 10
 batch_size = 512
 
-checkpoint_path = "training_5/cp.ckpt"
+checkpoint_path = "training_0/cp.ckpt"
 
 cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
                                                  save_weights_only=True,
@@ -337,6 +424,7 @@ cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
 if False:
     load_path = "training_4/cp.ckpt"
     model.load_weights(load_path)
+
 
 #white_wr = 0
 #black_wr = 0
@@ -417,3 +505,4 @@ for step in range(start, n_steps):
     # model.fit(x=[x, w], y=y, epochs = epochs, callbacks=[cp_callback])
     # model.fit(x=x, y=y, epochs = epochs, callbacks=[cp_callback])
     model.fit(x=x, y=yw, epochs=epochs, callbacks=[cp_callback], verbose=2, batch_size=batch_size)
+
