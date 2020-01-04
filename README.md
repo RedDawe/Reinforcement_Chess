@@ -16,8 +16,8 @@ Some of these rules (castling) are sometimes not allowed for computers as the ga
 
 # Stockfish cheat
 
-To adress computational scarcity, in this implementation we don't start with random moves but moves genereated by stockfish. It takes longer to generate the moves, but network requires less iterations to start learning something decent. At the end the network still self plays tho, so it is not capping its upside. It is not tabula rasa, but it still is a neural net playing chess.
+To adress computational scarcity, in this implementation we don't start with random moves but moves genereated by stockfish. It takes longer to generate the moves, but network requires less iterations to start learning something decent. At the end the network still self plays tho, so it is not capping its upside. It is not tabula rasa, but it still is a neural net playing chess. It could work even better if instead we first trained on a database of existing games (fully supervised) and only then we jumped into either this version or the fully random one.
 
 # Conclusion
 
-The network would need more training, but the completely random version did learn to reliably beat random moves if game length was capped at 20 moves (100 during training). This is not that terrible considering it had only played 2000 games out of the 72000+ possible at that moment. This whole thing is done without any special preprocessing except one_hot piece representation. DeepMing used many other features for Go, but I couldn't find their preprocessing for chess. The code could use paralisation during playing the training games.
+The network would need more training, but the completely random version did learn to reliably beat random moves if game length was capped at 20 moves (100 during training). This is not that terrible considering it had only played 2000 games out of the 72000+ possible at that moment. This whole thing is done without any special preprocessing except one_hot piece representation. DeepMing used many other features for Go, but we couldn't find their preprocessing for chess. The code could use paralisation during playing the training games.
