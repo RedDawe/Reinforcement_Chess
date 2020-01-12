@@ -536,8 +536,8 @@ for step in range(start, n_steps):
                 y.append(one_hot(move+p, 2*p+1))
                 #y.append(move)
             else:
-                #y.append(one_hot(board+p, 2*p+1))
-                y.append(one_hot(move + p, 2 * p + 1))
+                y.append(one_hot(board+p, 2*p+1))
+                #y.append(one_hot(move + p, 2 * p + 1))
                 #y.append(board)
 
     x = np.array(x)
