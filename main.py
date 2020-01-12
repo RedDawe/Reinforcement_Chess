@@ -106,7 +106,8 @@ def make_move(board, side, randomness=1.): #1 -> ai plays, 0 -> random move
       return 'game_over', np.zeros([8, 8])
 
   #if np.random.randn(1)*0.5+0.5 < randomness:
-  if np.random.rand(1) <= randomness:
+  #if np.random.rand(1) <= randomness:
+  if np.random.rand(1) < randomness:
     #logits =  model.predict([np.expand_dims(board, 0), np.zeros([1, 8, 8])])
     logits =  model.predict([np.expand_dims(one_hot(board+p, 2*p+1), 0), np.zeros([1, 8, 8])])[0, :, :, :]
     piece, to = decide_move(board, logits)
@@ -187,6 +188,8 @@ def decide_move(board, logits):
               if not is_check(flip(copy_board), N):
                 piece = [i, j]
                 to = [move[0], move[1]]
+                biggest_diff =  1 - logits[i, j, board[i, j]+p]
+                smallest_diff = logits[move[0], move[1], board[i, j] + p]
 
   return piece, to
 

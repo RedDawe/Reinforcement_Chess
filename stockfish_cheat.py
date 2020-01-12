@@ -183,7 +183,8 @@ def make_move(board, side, randomness=1.): #1 -> ai plays, 0 -> random move
       return 'game_over', np.zeros([8, 8])
 
   #if np.random.randn(1)*0.5+0.5 < randomness:
-  if np.random.rand(1) <= randomness:
+  #if np.random.rand(1) <= randomness:
+  if np.random.rand(1) < randomness:
     #logits =  model.predict([np.expand_dims(board, 0), np.zeros([1, 8, 8])])
     logits =  model.predict([np.expand_dims(one_hot(board+p, 2*p+1), 0), np.zeros([1, 8, 8])])[0, :, :, :]
     piece, to = decide_move(board, logits)
@@ -265,6 +266,8 @@ def decide_move(board, logits):
               if not is_check(flip(copy_board), N):
                 piece = [i, j]
                 to = [move[0], move[1]]
+                biggest_diff =  1 - logits[i, j, board[i, j]+p]
+                smallest_diff = logits[move[0], move[1], board[i, j] + p]
 
   return piece, to
 
@@ -317,6 +320,7 @@ def stockfish_move(board):
             stockfish_move = stockfish.get_best_move()
     except:
         stockfish_move = ''
+
 
     if stockfish_move:
         piece = [7-(int(stockfish_move[1])-1), alphabeta_alphabet_to_numberly_numbers[stockfish_move[0]]]
@@ -450,21 +454,21 @@ def is_legal(board, piece, move): #check if move is in a direction that the piec
   else:
     print('u fucked up')
 
-n_steps = 200
-start = 5#44
-games_to_play = 100
+n_steps = 1
+start = 0#44
+games_to_play = 10
 max_depth = 100
-epochs = 2
-batch_size = 512
+epochs = 2 #2
+batch_size = 2#512
 
-checkpoint_path = "training_1/cp.ckpt"
+checkpoint_path = "training_3/cp.ckpt"
 
 cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
                                                  save_weights_only=True,
                                                  verbose=1)
 
-if True:
-    load_path = "training_0/cp.ckpt"
+if False:
+    load_path = "training_1/cp.ckpt"
     model.load_weights(load_path)
 
 
@@ -532,7 +536,8 @@ for step in range(start, n_steps):
                 y.append(one_hot(move+p, 2*p+1))
                 #y.append(move)
             else:
-                y.append(one_hot(board+p, 2*p+1))
+                #y.append(one_hot(board+p, 2*p+1))
+                y.append(one_hot(move + p, 2 * p + 1))
                 #y.append(board)
 
     x = np.array(x)
@@ -547,5 +552,4 @@ for step in range(start, n_steps):
     # model.fit(x=[x, w], y=y, epochs = epochs, callbacks=[cp_callback])
     # model.fit(x=x, y=y, epochs = epochs, callbacks=[cp_callback])
     model.fit(x=x, y=yw, epochs=epochs, callbacks=[cp_callback], verbose=2, batch_size=batch_size)
-    print(time.time())
 
