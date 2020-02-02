@@ -88,7 +88,7 @@ def weighted_loss(logits, labels):
     labels = labels[0, :, :, :]
     logits = tf.keras.backend.clip(logits, tf.keras.backend.epsilon(), 1 - tf.keras.backend.epsilon())
 
-    return tf.keras.backend.mean(-(labels * tf.math.log(logits) + (1-labels) * tf.math.log(1-logits)) * weights)
+    return tf.keras.backend.mean(-(labels * tf.math.log(logits) + (1-labels) * tf.math.log(1-logits)) * weights)*8*8*(56+8)
 
 
 inputs = tf.keras.Input(shape=(8, 8, 2 * p + 1), dtype='float32')
