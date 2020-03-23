@@ -78,7 +78,7 @@ def is_game_over(board):
 just_play = True
 if not just_play:
     num_steps = 10
-    num_games = 10000
+    num_games = 1000
     num_epochs = 1000
 
     for step in range(num_steps):
