@@ -29,6 +29,16 @@ model = tf.keras.Sequential([
     tf.keras.layers.Softmax()
 ])
 
+model = tf.keras.Sequential([
+    tf.keras.layers.Input([3, 3]),
+    OneHot(3, 1024),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(36, activation='relu'),
+    tf.keras.layers.Dense(36, activation='relu'),
+    tf.keras.layers.Dense(9, activation='relu'),
+    tf.keras.layers.Softmax()
+])
+
 model.compile(tf.keras.optimizers.Adam(0.001), 'sparse_categorical_crossentropy')
 model.summary()
 
@@ -77,9 +87,9 @@ def is_game_over(board):
 
 just_play = True
 if not just_play:
-    num_steps = 10
-    num_games = 1000
-    num_epochs = 1000
+    num_steps = 100
+    num_games = 2000
+    num_epochs = 100
 
     for step in range(num_steps):
         print('STEP:', step)
@@ -123,10 +133,10 @@ if not just_play:
 
         print(x.shape, y.shape)
 
-        model.fit(x+1, y, batch_size=1024, epochs=num_epochs, verbose=2)
-        #model.evaluate(x, y)
+        model.fit(x+1, y, batch_size=1024, epochs=num_epochs, verbose=0)
+        model.evaluate(x, y)
 
-    model.save_weights(checkpoint_path)
+        model.save_weights(checkpoint_path)
 else:
     model.load_weights(checkpoint_path)
 
